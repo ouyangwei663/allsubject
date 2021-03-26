@@ -1,0 +1,15 @@
+{ 
+    "version": "0.0",
+    "configurations": [{
+     	"default" : 
+     	{
+     		"launchtype" : "remote"
+     	},
+     	"h5" : 
+     	{
+     		"launchtype" : "remote"
+     	},
+     	"type" : "uniCloud"
+     }
+    ]
+}
