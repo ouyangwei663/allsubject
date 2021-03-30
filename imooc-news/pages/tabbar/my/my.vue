@@ -12,7 +12,7 @@
 			<u-gap height="80"></u-gap>
 			<button @click="submit" class="getSmsCode">登录</button>
 			<view class="alternative">
-				<view class="password" @click="passwordLogin()">忘记密码</view>
+				<view class="password">忘记密码</view>
 				<view class="issue" @click="loginBy()">遇到问题</view>
 			</view>
 		</view>
@@ -20,11 +20,21 @@
 </template>
 
 <script>
+	import {
+		getDeviceUUID
+	} from '@/common/utils.js'
+
+	const captchaOptions = {
+		deviceId: getDeviceUUID(),
+		scene: 'login'
+	}
 	export default {
 		data() {
 			return {
 				userName: '',
 				password: '',
+				captcha: '',
+				needCaptcha: uni.getStorageSync('uni-needCaptcha'),
 			}
 		},
 		computed: {
@@ -35,7 +45,58 @@
 		},
 		methods: {
 			submit() {
-				
+				console.log(1)
+				const data = {
+					username: this.username,
+					password: this.password,
+					captcha: this.captchaText,
+					...captchaOptions
+				};
+
+
+				uniCloud.callFunction({
+					name: 'user-center',
+					data: {
+						action: 'login',
+						params: data
+					},
+					success: (e) => {
+						if (e.result.code == 0) {
+							this.needCaptcha = false;
+							uni.setStorageSync('uni-needCaptcha', this.needCaptcha)
+
+							uni.setStorageSync('uni_id_token', e.result.token)
+							uni.setStorageSync('username', e.result.username)
+							uni.setStorageSync('login_type', 'online')
+							uni.setStorageSync('uni_id_has_pwd', true)
+					
+						} else {
+							uni.showModal({
+								content: e.result.message,
+								showCancel: false
+							})
+
+							this.needCaptcha = e.result.needCaptcha;
+							uni.setStorageSync('uni-needCaptcha', this.needCaptcha)
+							if (this.needCaptcha) {
+								this.captcha('createCaptcha')
+							}
+						}
+					},
+					fail: (e) => {
+						uni.showModal({
+							content: JSON.stringify(e),
+							showCancel: false
+						})
+					},
+					complete: () => {
+						this.loginBtnLoading = false
+					}
+				})
+
+
+
+
 			},
 			loginBy(type) {
 				this.$u.toast('开发中，敬请期待');
