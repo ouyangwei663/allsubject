@@ -2,19 +2,30 @@
 	<view class="wrap">
 		<view class="top"></view>
 		<view class="content">
-			<view class="title">欢迎登录</view>
-			<u-form-item>
-				<u-input v-model="userName" placeholder="请输入用户名6位以上" />
-			</u-form-item>
-			<u-form-item>
-				<u-input type="password" v-model="password" placeholder="请输入密码" />
-			</u-form-item>
+			<u-tabs :list="list" :is-scroll="false" :current="current" @change="change"></u-tabs>
+			<view v-if="current==0">
+				<u-verification-code seconds="60" ref="uCode" @change="codeChange"></u-verification-code>
+				<u-form-item>
+					<u-input v-model="phone" placeholder="请输入手机号码" />
+				</u-form-item>
+				<u-form-item>
+					<u-input placeholder="请输入验证码" type="text"></u-input>
+					<u-button style="width: 20%;margin-right: 0;" slot="right" @click="getCode()" type="success"
+						size="medium">{{codeTips}}
+					</u-button>
+				</u-form-item>
+			</view>
+			<view v-if="current==1">
+				<u-form-item>
+					<u-input v-model="userName" placeholder="请输入用户名6位以上" />
+				</u-form-item>
+				<u-form-item>
+					<u-input type="password" v-model="password" placeholder="请输入密s码" />
+				</u-form-item>
+			</view>
+
 			<u-gap height="80"></u-gap>
 			<button @click="submit" class="getSmsCode">登录</button>
-			<view class="alternative">
-				<view class="password">忘记密码</view>
-				<view class="issue" @click="loginBy()">遇到问题</view>
-			</view>
 		</view>
 	</view>
 </template>
@@ -31,8 +42,17 @@
 	export default {
 		data() {
 			return {
+				phone: '',
+				phonenum: '',
+				list: [{
+					name: '短信登录'
+				}, {
+					name: '账号密码登录'
+				}, ],
+				current: 0,
 				userName: '',
 				password: '',
+				codeTips: '',
 				captcha: '',
 				needCaptcha: uni.getStorageSync('uni-needCaptcha'),
 			}
@@ -44,67 +64,104 @@
 
 		},
 		methods: {
+			change(index) {
+				this.current = index;
+			},
 			submit() {
-				console.log(1)
-				const data = {
-					username: this.username,
-					password: this.password,
-					captcha: this.captchaText,
-					...captchaOptions
-				};
+				if (this.current == 0) {
+					uni.showToast({
+						icon: 'none',
+						title: '暂时未开放手机短信登录',
+						duration: 2000
+					});
+				} else {
+					if (this.userName.length < 3) {
+						uni.showToast({
+							icon: 'none',
+							title: '账号最短为 3 个字符'
+						});
+						return;
+					}
+					if (this.password.length < 6) {
+						uni.showToast({
+							icon: 'none',
+							title: '密码最短为 6 个字符'
+						});
+						return;
+					}
+					const data = {
+						username: this.userName,
+						password: this.password,
+						captcha: this.captchaText,
+						...captchaOptions
+					};
+					uniCloud.callFunction({
+						name: 'user-center',
+						data: {
+							action: 'login',
+							params: data
+						},
+						success: (e) => {
+							if (e.result.code == 0) {
+								this.needCaptcha = false;
+								uni.setStorageSync('uni-needCaptcha', this.needCaptcha)
+								uni.setStorageSync('uni_id_token', e.result.token)
+								uni.setStorageSync('username', e.result.username)
+								uni.setStorageSync('login_type', 'online')
+								uni.setStorageSync('uni_id_has_pwd', true)
+								uni.reLaunch({
+									url: '../index/index'
+								});
+							} else {
+								uni.showModal({
+									content: e.result.message,
+									showCancel: false
+								})
 
-
-				uniCloud.callFunction({
-					name: 'user-center',
-					data: {
-						action: 'login',
-						params: data
-					},
-					success: (e) => {
-						if (e.result.code == 0) {
-							this.needCaptcha = false;
-							uni.setStorageSync('uni-needCaptcha', this.needCaptcha)
-
-							uni.setStorageSync('uni_id_token', e.result.token)
-							uni.setStorageSync('username', e.result.username)
-							uni.setStorageSync('login_type', 'online')
-							uni.setStorageSync('uni_id_has_pwd', true)
-					
-						} else {
+								this.needCaptcha = e.result.needCaptcha;
+								uni.setStorageSync('uni-needCaptcha', this.needCaptcha)
+								if (this.needCaptcha) {
+									this.captcha('createCaptcha')
+								}
+							}
+						},
+						fail: (e) => {
 							uni.showModal({
-								content: e.result.message,
+								content: JSON.stringify(e),
 								showCancel: false
 							})
-
-							this.needCaptcha = e.result.needCaptcha;
-							uni.setStorageSync('uni-needCaptcha', this.needCaptcha)
-							if (this.needCaptcha) {
-								this.captcha('createCaptcha')
-							}
+						},
+						complete: () => {
+							this.loginBtnLoading = false
 						}
-					},
-					fail: (e) => {
-						uni.showModal({
-							content: JSON.stringify(e),
-							showCancel: false
-						})
-					},
-					complete: () => {
-						this.loginBtnLoading = false
-					}
-				})
+					})
+
+				}
 
 
 
 
 			},
-			loginBy(type) {
-				this.$u.toast('开发中，敬请期待');
+			getCode() {
+				if (this.$refs.uCode.canGetCode) {
+					// 模拟向后端请求验证码
+					uni.showLoading({
+						title: '正在获取验证码',
+						mask: true
+					})
+					setTimeout(() => {
+						uni.hideLoading();
+						// 这里此提示会被this.start()方法中的提示覆盖
+						this.$u.toast('验证码已发送');
+						// 通知验证码组件内部开始倒计时
+						this.$refs.uCode.start();
+					}, 2000);
+				} else {
+					this.$u.toast('倒计时结束后再发送');
+				}
 			},
-			goPage(url) {
-				this.$u.route({
-					url: url
-				})
+			codeChange(text) {
+				this.codeTips = text;
 			},
 
 		}

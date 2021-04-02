@@ -15,7 +15,10 @@
 					</u-row>
 				</view>
 			</u-navbar>
-			<view class="content">
+			<text>
+				尊敬的{{username}}欢迎来到本软件
+			</text>
+			<view v-if="false" class="content">
 				<!-- 正文内容 -->
 				<view class="wrap">
 					<u-sticky :enable="enable">
@@ -48,7 +51,7 @@
 											</u-col>
 										</u-row>
 									</view>
-								
+
 								</scroll-view>
 							</swiper-item>
 							<swiper-item class="swiper-item">
@@ -75,8 +78,40 @@
 </template>
 <script>
 	export default {
+		onLoad() {
+			let username = uni.getStorageSync('username')
+			if (username) {
+				this.username = username
+			} else {
+				this.username = '游客'
+			}
+			let uniIdToken = uni.getStorageSync('uni_id_token')
+			if (uniIdToken) {
+				uniCloud.callFunction({
+					name: 'user-center',
+					data: {
+						action: 'checkToken',
+					},
+					success: (e) => {
+						if (e.result.code > 0) {
+							//token过期或token不合法，重新登录
+							this.guideToLogin()
+						}
+					},
+					fail(e) {
+						uni.showModal({
+							content: JSON.stringify(e),
+							showCancel: false
+						})
+					}
+				})
+			} else {
+				this.guideToLogin()
+			}
+		},
 		data() {
 			return {
+				username: '',
 				list: [{
 						name: 'html'
 					},
@@ -107,11 +142,31 @@
 
 		},
 		methods: {
+
+			//去登录页
+			guideToLogin() {
+				uni.showModal({
+					title: '未登录',
+					content: '您未登录或者token已过期，需要登录后才能继续',
+					showCancel: false,
+					success: function(res) {
+						if (res.confirm) {
+							uni.reLaunch({
+								url: '../my/my'
+							});
+						} else if (res.cancel) {
+							console.log('用户点击取消');
+						}
+					}
+
+				})
+			},
 			// tab栏切换
 			change(index) {
 				this.swiperCurrent = index;
 
 			},
+
 			transition({
 				detail: {
 					dx
