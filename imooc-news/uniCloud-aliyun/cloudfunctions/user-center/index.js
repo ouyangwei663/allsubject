@@ -7,7 +7,7 @@ const dbCmd = db.command
 
 exports.main = async (event, context) => {
 	let params = event.params || {}
-	
+
 	// 登录记录
 	const loginLog = async (res = {}, type = 'login') => {
 		const now = Date.now()
@@ -49,9 +49,9 @@ exports.main = async (event, context) => {
 
 		return recentRecord.data.filter(item => item.state === 0).length === recordSize;
 	}
-	
+
 	//event为客户端上传的参数
-	console.log('event : ' + event)
+	console.log('event : ' + JSON.stringify(event))
 
 	let payload = {}
 	let noCheckAction = [
@@ -74,6 +74,7 @@ exports.main = async (event, context) => {
 			return payload
 		}
 		params.uid = payload.uid
+
 	}
 
 	let res = {}
@@ -85,18 +86,15 @@ exports.main = async (event, context) => {
 		case 'login':
 			let passed = false;
 			let needCaptcha = await getNeedCaptcha();
-			
 			if (needCaptcha) {
 				res = await uniCaptcha.verify(params)
 				if (res.code === 0) passed = true;
 			}
-			
 			if (!needCaptcha || passed) {
 				res = await uniID.login(params);
 				await loginLog(res);
 				needCaptcha = await getNeedCaptcha();
 			}
-			
 			res.needCaptcha = needCaptcha;
 			break;
 		case 'loginByWeixin':

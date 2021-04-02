@@ -51,4 +51,7 @@
 ```
 
 ##token的校验
+1. token的有效期为7200s(两小时，暂时没有设置重新获取token的API)
+2. token在登录的时候存储在'uni_id_token' 里面，请求的时候不用再写token，请求会自动带上'uni_id_token'的值
+ 
 
