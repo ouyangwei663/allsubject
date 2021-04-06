@@ -71,5 +71,9 @@
     },
     "mp-toutiao" : {
         "usingComponents" : true
+    },
+    "h5" : {
+        "title" : "哈哈哈",
+        "domain" : ""
     }
 }

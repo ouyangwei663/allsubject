@@ -1,5 +1,6 @@
 <template>
 	<view class="content">
+		<loading text="加载中.." mask="true" click="true" ref="loading"></loading>
 		<view>
 			<u-navbar :is-back="false" :is-fixed="true " :background="{ background: '#f07373' }">
 				<view style="width: 100%;">
@@ -27,61 +28,6 @@
 
 				</view>
 			</u-card>
-			<view v-if="false" class="con">
-				<!-- 正文内容 -->
-				<view class="wrap">
-					<u-sticky :enable="enable">
-						<!-- 只能有一个根元素 -->
-						<view class="sticky">
-							<view class="u-tabs-box">
-								<u-tabs-swiper activeColor="#d9d8d5" ref="tabs" :list="list" :current="current"
-									@change="change" :is-scroll="false" swiperWidth="750"></u-tabs-swiper>
-							</view>
-						</view>
-					</u-sticky>
-					<view>
-						<swiper class="swiper-box" :current="swiperCurrent" @transition="transition"
-							@animationfinish="animationfinish">
-							<swiper-item class="swiper-item">
-								<scroll-view scroll-y style="width: 100%;">
-									<view class="bl_card">
-										<u-row>
-											<u-col span="5">
-												<view class="photo">
-													<image style="height: 100%;width: 100%;"
-														src="https://img12.360buyimg.com/n7/jfs/t1/102191/19/9072/330688/5e0af7cfE17698872/c91c00d713bf729a.jpg">
-													</image>
-												</view>
-											</u-col>
-											<u-col span="7">
-												<view class="news">
-													<text> safeeeeeeeeeeeeeefsefsaefasef</text>
-												</view>
-											</u-col>
-										</u-row>
-									</view>
-
-								</scroll-view>
-							</swiper-item>
-							<swiper-item class="swiper-item">
-								<scroll-view scroll-y style="height: 100%;width: 100%;">
-									222
-								</scroll-view>
-							</swiper-item>
-							<swiper-item class="swiper-item">
-								<scroll-view scroll-y style="height: 100%;width: 100%;">
-									333
-								</scroll-view>
-							</swiper-item>
-							<swiper-item class="swiper-item">
-								<scroll-view scroll-y style="height: 100%;width: 100%;">
-									44
-								</scroll-view>
-							</swiper-item>
-						</swiper>
-					</view>
-				</view>
-			</view>
 		</view>
 	</view>
 </template>
@@ -92,6 +38,7 @@
 	} from '../../../untils/index.js';
 	export default {
 		onLoad() {
+
 			let username = uni.getStorageSync('username')
 			if (username) {
 				this.username = username
@@ -149,12 +96,17 @@
 		created() {
 			var res = uniCloud.callFunction({
 				name: "find_block",
-				data: {}
+				data: {
+					action: 'getlist'
+				}
 			}).then(res => {
 				console.log('res', res)
 				this.articleList = res.result.data
 			})
 
+		},
+		onReady() {
+			// this.$refs.loading.open();
 		},
 		onShow() {
 			this.enable = true
@@ -192,6 +144,7 @@
 			},
 			tranferHtml(content) {
 				if (content) {
+					console.log('666666666', translateMarkdown(content))
 					return translateMarkdown(content);
 				}
 			},
