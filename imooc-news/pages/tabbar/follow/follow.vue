@@ -1,9 +1,8 @@
 <template>
 	<view class="add">
-		<u-form-item>
-			<u-input v-model="phone" placeholder="请输入手机号码" />
-		</u-form-item>
-		<button @click="submit" class="getSmsCode">添加</button>
+		<textarea maxlength="-1" v-model="phone" auto-height />
+
+	<button @click="submit" class="getSmsCode">添加</button>
 	</view>
 </template>
 <script>
@@ -25,7 +24,7 @@
 					name: "find_block",
 					data: {
 						action: 'add_list',
-						content: '1234567879878456'
+						content: this.phone
 					}
 				}).then(res => {
 					console.log('res', res)

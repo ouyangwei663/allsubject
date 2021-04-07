@@ -23,10 +23,10 @@ exports.main = async (event, context) => {
 				break;
 			case 'add_list':
 				let obj = {};
-				obj._id = "605daa2ad635880001556696"
+				obj.user_id = "605daa2ad635880001556696"
 				obj.title = "第二篇文章"
-				obj.content = event.conent
-				var row = await collection.add()
+				obj.content = event.content 
+				var row = await collection.add(obj)
 				res.data = row.data
 				res.code = 0
 
